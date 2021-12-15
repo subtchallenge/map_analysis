@@ -68,7 +68,7 @@ python test_pcl2.py /cloud
 
 Now you will see new points in RViz -- the green inlier cloud and red outlier cloud. Every time a map is processed, you can also see the metrics with `rostopic echo /map_metrics`.
 
-![Map Cube](https://github.com/subtchallenge/map_analysis/test/map_cube.gif)
+![Map Cube](https://github.com/subtchallenge/map_analysis/blob/main/test/map_cube.gif)
 
 ## Changing Parameters
 
