@@ -1,0 +1,4 @@
+sensor_msgs/PointCloud2 cloud
+---
+float32 inlier_rate
+float32 outlier_rate

@@ -1,0 +1,10 @@
+# Parameters for cropping a rectangular volume out of the cloud before processing
+# This prevents map metrics from including areas not provided in the ground truth cloud
+# can be loaded with `rosparam load crop_cloud.yaml`
+
+# The following parameters crop out points around the staging area at the SubT Challenge Systems Competition Finals course
+
+crop_starting_area: true
+crop_min_pt: [-100, -100, -20]
+crop_max_pt: [3, 20, 20]
+

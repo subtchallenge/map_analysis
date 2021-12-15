@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>map_analysis</name>
+  <version>1.0.0</version>
+  <description>The map_analysis package to evaluate the quality of mapping data.</description>
+  <maintainer email="arthur.c.schang2.ctr@army.mil">Arthur Schang</maintainer>
+  <maintainer email="angela.c.maio.civ@army.mil">Angela Maio</maintainer>
+  <maintainer email="john.g.rogers59.civ@army.mil">John Rogers</maintainer>
+  <license>None</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rosbag</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>interactive_markers</build_depend>
+  <build_export_depend>rosbag</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <build_export_depend>visualization_msgs</build_export_depend>
+  <build_export_depend>interactive_markers</build_export_depend>
+  <build_export_depend>message_generation</build_export_depend>
+  <exec_depend>rosbag</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>dynamic_reconfigure</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>interactive_markers</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+</package>

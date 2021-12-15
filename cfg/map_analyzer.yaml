@@ -1,0 +1,8 @@
+# Mapping Analysis Parameters
+# can be loaded with `rosparam load map_analyzer.yaml`
+
+inlier_tolerance: 1.0
+outlier_tolerance: 1.0
+accumulate_mode: true 
+min_leaf_size: 0.05
+incremental_inlier_tolerance: 0.1
