@@ -5,7 +5,14 @@ A version of this package was utilized to analyze competitor-submitted maps in r
 
 A publication on this work is in progress. For now, if you use this code in an academic context, please cite this repository.
 
+```
+IEEE Reference List Format: 
+A. Schang, J. Rogers, and A. Maio (2021) Map Analysis (Version 1.0) [Source code]. https://github.com/subtchallenge/map_analysis.
+```
+
 ## Description of Mapping Metrics
+
+### Point Cloud Metrics
 
 The Map Analysis package generates metrics for maps in the 3D point cloud format. Three of the metrics are intrinsic qualities of the map:
 
@@ -26,6 +33,16 @@ The remaining map metrics are calculated based on comparison of the input map ag
 The inlier and outlier clouds are published on the ROS topics `MA_inlier_cloud` and `MA_outlier_cloud`, and the remaining numerical metrics are published on the `map_metrics` topic. 
 
 While this package has only been tested using data from the SubT Challenge environments, this software is compatible with other environments provided a sufficiently accurate and dense ground truth pointcloud is known.
+
+### Artifact Metrics
+
+This package can also generate metrics based on another form of mapping -- reference points provided by object localization. 
+In the SubT Challenge, these reference points were submitted as "artifact reports" identifying type and location of 10 specified object types. The reports are compared against surveyed "ground truth" locations to produce the following metrics:
+
+* Root Mean Square Error -- standard deviation of the errors in reported artifact locations, where error is the Euclidean distance to the nearest artifact of the same type.
+* Root Mean Square Error Limited to the XY Plane -- same as above, except the Euclidean distance is measured as projected onto the XY plane, i.e., error in the Z axis (height) is ignored. 
+
+These metrics are published on the ROS topic `artifact_metrics`. 
 
 ## Installation
 
@@ -70,13 +87,31 @@ Now you will see new points in RViz -- the green inlier cloud and red outlier cl
 
 ![Map Cube](https://github.com/subtchallenge/map_analysis/blob/main/test/map_cube.gif)
 
+If you look closely, you can also see example ground truth artifact locations as blue markers with object labels (backpack, survivor, etc.). You can submit an artifact report to be compared against these ground truth artifacts, for example:
+
+```
+rostopic pub /subt/artifact_reports map_analysis/ArtifactReport "timestamp: {secs: 1, nsecs: 0}
+reported_artifact_type: 'rope'
+reported_artifact_position: {x: 0.0, y: 9.5, z: 6.0}
+closest_artifact_name: ''
+distance: 0
+points_scored: 0
+total_score: 0"
+```
+
+Now there is a new line marker displaying the distance from the artifact report to the nearest ground truth artifact of the same type. The metrics associated with the artifact report can be viewed with `rostopic echo /artifact_metrics`.
+
+![Map Artifact Report](https://github.com/subtchallenge/map_analysis/blob/main/test/map_artifactreport.png)
+
+Note: In the `/subt/artifact_reports` topic, only the `reported_artifact_type` and `reported_artifact_position` fields are used by the Map Analysis package. The message is formatted for compatibility with logs from the [SubT Virtual Testbed](https://github.com/osrf/subt).
+
 ## Changing Parameters
 
 The launch file at `src/map_analysis/launch/map_analysis.launch` allows you to easily change the following parameters:
 
 * `env_pcd`: The path to the ground truth point cloud file for a given environment (string, default: SubTLogo.pcd)  
+* `env_gt`: The file containing the ground truth artifacts in a given environment (string, default: artifacts.csv)  
 * `rviz`: Whether or not to launch RViz (bool, default: false)  
-* `env_gt`: The file containing the artifacts in a given environment (string, default: artifacts.csv)  
 * `mesh_analysis`: Enable mesh analysis (bool, default: false)  
 
 Additional parameters can be adjusted during runtime using Dynamic Reconfiguration (i.e. `rosrun rqt_reconfigure rqt_reconfigure`)  
@@ -102,7 +137,7 @@ A quick method to view the resulting map metrics for the entire run from the bag
 The `map_analysis` package can also be run alongside an active bag playback to generate results with the `sim_time` parameter set to true.  
 This method should use the live analysis mode, not the offline bag analysis mode.
 
-### Ground Truth Point Clouds
+### Ground Truth Data 
 
 When analyzing mapping data from the SubT Challenge events, please utilize the following repositories to download ground truth point cloud (`.pcd`) files which are compatible with the Map Analysis package:
 
@@ -113,7 +148,7 @@ When analyzing mapping data from the SubT Challenge events, please utilize the f
 
 These can be cloned within your `mapping_analysis_ws` and loaded by using the path to a pcd file as your `env_pcd` argument during launch.
  
-### Contact Information ###
+## Contact Information
 
 If you have any questions or comments about this repository, please contact:
 

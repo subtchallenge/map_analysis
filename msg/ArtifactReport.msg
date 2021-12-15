@@ -3,7 +3,9 @@
 time timestamp 					# time since sim bootup
 string reported_artifact_type			# artifact type from the report
 geometry_msgs/Point reported_artifact_position	# artifact position from the report
+
+# the following may be left blank for use with the map_analysis package. map_analysis will compare reports to loaded ground truth artifacts from a csv
 string closest_artifact_name			# model name of the nearest artifact, e.g., backpack_4
 float64 distance				# distance to nearest artifact [m]
-int32 points_scored				# points scored in this attempt
+int32 points_scored				# points scored in this attempt 
 int32 total_score				# resulting total score after scoring this attempt
