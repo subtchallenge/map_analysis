@@ -36,6 +36,7 @@ class LiveMapAnalyzer {
   ros::NodeHandle nh;
   ros::NodeHandle private_nh;
   std::string modelfname;
+  std::string meshfname;
   pcl::PointCloud<POINT_T>::Ptr model_;
   pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter_;
   pcl::VoxelGrid<pcl::PCLPointCloud2> accumulate_filter_;
@@ -337,7 +338,7 @@ LiveMapAnalyzer::LiveMapAnalyzer(): nh(), private_nh("~") {
       ROS_INFO_STREAM("Got crop bounds");
     }
   }
-  private_nh.param("mesh_analysis", enable_mesh_analysis_, true);
+  enable_mesh_analysis_ = private_nh.getParam("mesh_model", meshfname); // if mesh model is provided, perform mesh-based analysis [EXPERIMENTAL]
   double analysis_update_interval;
   private_nh.param("analysis_update_interval", analysis_update_interval, 1.0);
   model_.reset(new pcl::PointCloud<POINT_T>);
@@ -381,7 +382,7 @@ LiveMapAnalyzer::LiveMapAnalyzer(): nh(), private_nh("~") {
   PublishPropMarkers();
   server.setCallback(boost::bind(&LiveMapAnalyzer::reconfigure_callback, this, _1, _2));
   if(enable_mesh_analysis_)
-    gtMesh_.Process();
+    gtMesh_.Process(meshfname);
   artifact_sub =
     nh.subscribe<map_analysis::ArtifactReport>("/subt/artifact_reports", 10,
                                             boost::bind(&LiveMapAnalyzer::ArtifactCallback, this, _1));

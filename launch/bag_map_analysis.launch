@@ -3,7 +3,6 @@
   <arg name="rviz" default="false" doc="Whether or not to launch RViz"/>
   <arg name="env_pcd" default="$(find map_analysis)/test/SubTLogo.pcd" doc="Path to the pointcloud file for a given environment"/>
   <arg name="env_gt" default="$(find map_analysis)/test/artifacts.csv" doc="Path to the file containing the artifact locations in a given environment"/>
-  <arg name="mesh_analysis" default="false" doc="Enable mesh analysis"/>
   
   <arg name="bag_in" default="$(find map_analysis)/test/input_map.bag" doc="Path to the rosbag input file to process"/>
   <arg name="bag_out" default="$(find map_analysis)/test/output_map.bag" doc="Path for the rosbag output file to include map metrics"/>
@@ -17,7 +16,6 @@
   <node pkg="map_analysis" type="bag_map_analysis" name="map_analysis" output="screen" required="true">
     <param name="model" value="$(arg env_pcd)"/>
     <param name="gt_artifact_filename" value="$(arg env_gt)"/>
-    <param name="mesh_analysis" value="$(arg mesh_analysis)"/>
     <param name="bag_in" value="$(arg bag_in)"/>
     <param name="bag_out" value="$(arg bag_out)"/>
     <param name="max_duration_sec" value="$(arg max_duration_sec)"/> 

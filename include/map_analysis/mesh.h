@@ -49,7 +49,7 @@ class RefMesh {
  public:
   RefMesh();
   virtual ~RefMesh();
-  void Process();
+  void Process(const std::string& mesh_path);
   void PublishMesh();
   // Returns the distance to the nearest face in the mesh along with the face index
   std::tuple<double, double> DistCheck(const pcl::PointCloud<pcl::PointXYZ>& cloud);

@@ -7,5 +7,5 @@ float64 coverage  #  inliers compared to ground truth, %
 float64 error    # outliers compared to ground truth, %
 int64 size      # number of points
 float64 rate     # updates per second, Hz
-float64 density  # avg points per surface patch for each patch covered
+float64 density  # avg points per surface patch for each patch of the mesh covered (currently unused)
 

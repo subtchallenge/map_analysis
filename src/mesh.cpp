@@ -4,17 +4,16 @@
 const aiScene* RefMesh::loadScene(const std::string& path) {
   const aiScene* scene = importer.ReadFile(path.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
   if (scene != NULL) {
-    ROS_INFO_STREAM("Loaded scene!");
-    ROS_INFO_STREAM("Scene has " << scene->mNumMeshes << " meshes in it ");
+    ROS_DEBUG_STREAM("Loaded mesh scene! Scene has " << scene->mNumMeshes << " meshes in it ");
     size_t vert_count = 0;
     size_t face_count = 0;
     for (size_t i = 0; i < scene->mNumMeshes; i++) {
       vert_count += scene->mMeshes[i]->mNumVertices;
       face_count += scene->mMeshes[i]->mNumFaces;
     }
-    ROS_INFO_STREAM("Total : " << vert_count << " vertices and " << face_count << " faces");
+    ROS_INFO_STREAM("Loaded mesh scene! Total : " << vert_count << " vertices and " << face_count << " faces");
   } else {
-    ROS_ERROR_STREAM("Did not load scene!");
+    ROS_ERROR_STREAM("Did not load mesh scene!");
     return NULL;
   }
   return scene;
@@ -41,9 +40,9 @@ void RefMesh::WalkScene(const aiNode* node, const aiMatrix4x4& transf, int depth
     preamble_ss << "\t";
   std::string preamble = preamble_ss.str();
   if (node) {
-    ROS_INFO_STREAM(preamble << " Node " << node->mName.C_Str() << " has " << node->mNumMeshes << " meshes and " << node->mNumChildren << " children");
+    ROS_DEBUG_STREAM(preamble << " Node " << node->mName.C_Str() << " has " << node->mNumMeshes << " meshes and " << node->mNumChildren << " children");
     aiMatrix4x4 cur_transf = transf * node->mTransformation;
-    PrintMat(cur_transf);
+    //PrintMat(cur_transf);
     if (node->mNumMeshes != 0) {
       std::vector<unsigned int> mesh_inds;
       for (int i = 0; i < node->mNumMeshes; i++) {
@@ -55,7 +54,7 @@ void RefMesh::WalkScene(const aiNode* node, const aiMatrix4x4& transf, int depth
       WalkScene(node->mChildren[i], cur_transf, depth+1);
     }
   } else {
-    ROS_INFO_STREAM(preamble << "Node is null");
+    ROS_DEBUG_STREAM(preamble << "Node is null");
   }
 }
 VertHolder TransformVert(const VertHolder& vh, const aiMatrix4x4& transf) {
@@ -69,7 +68,7 @@ VertHolder TransformVert(const VertHolder& vh, const aiMatrix4x4& transf) {
   vh_out.vert.z /= scale;
   return vh_out;
 }
-void RefMesh::Process() {
+void RefMesh::Process(const std::string& mesh_path) {
   // Pseudocode
   // 1) Walk the meshes in the scene and add their vertices to a master vertex list
   // 1.5) Need to load the SDF file and bake all transforms into model files
@@ -77,16 +76,16 @@ void RefMesh::Process() {
   // 3) These structures offset indices by count as we add new meshes (for master mesh union)
   // 4) Reverse the face -> vertex association and populate a vector of vertices with face refs
   //
-  ROS_INFO_STREAM("Reference mesh loading");
+  ROS_DEBUG_STREAM("Reference mesh loading");
   const aiScene*
-    scene = loadScene("/home/jgrogers/Documents/satsop_alpha_mesh/meshes/satsopalpha.dae");
-    //scene = loadScene("/home/jgrogers/Downloads/cave_circuit/cave_circuit_04/meshes/worldMesh.dae");
+    scene = loadScene(mesh_path);
   if (scene == NULL) {
     ROS_ERROR_STREAM("No scene loaded!");
     exit(0);
   }
-  ROS_INFO_STREAM("Reference mesh has finished loading");
-  aiMatrix4x4 global_offset =
+  ROS_DEBUG_STREAM("Reference mesh has finished loading");
+  /* // for satsop alpha mesh
+    aiMatrix4x4 global_offset =
     aiMatrix4x4(1.0, 0, 0, 32.0,
                 0, 1.0, 0, 40.0,
                 0, 0, 1.0, -3.0,
@@ -103,13 +102,20 @@ void RefMesh::Process() {
                 0, 0, -1, 0,
                 0, 1, 0, 0,
                 0, 0, 0, 1);
+  */
+  // Add transformation matrices if needed for an environment mesh here
+    aiMatrix4x4 global_offset =
+    aiMatrix4x4(1.0, 0, 0, 0.0,
+                0, 1.0, 0, 0.0,
+                0, 0, 1.0, 0.0,
+                0, 0,   0, 1.0);
   WalkScene(scene->mRootNode, global_offset);
   size_t vert_count = 0;
   size_t face_count = 0;
-  ROS_INFO_STREAM("Scene still has " << scene->mNumMeshes << " meshes in it ");
+  ROS_DEBUG_STREAM("Scene still has " << scene->mNumMeshes << " meshes in it ");
   model_meshes.resize(scene->mNumMeshes);
   for (size_t i = 0; i < scene->mNumMeshes; i++) {
-    ROS_INFO_STREAM("Mesh " << i << " is called " << scene->mMeshes[i]->mName.C_Str()
+    ROS_DEBUG_STREAM("Mesh " << i << " is called " << scene->mMeshes[i]->mName.C_Str()
                     << " and has " << scene->mMeshes[i]->mNumVertices << " vertices and "
                     << scene->mMeshes[i]->mNumFaces << " faces");
     std::vector<VertHolder> tmp_vert_vec;
@@ -160,7 +166,7 @@ void RefMesh::Process() {
   for (size_t i = 0; i < faces.size(); i++) {
     if (faces[i].mNumIndices > most_verts) {
       most_verts = faces[i].mNumIndices;
-      ROS_INFO_STREAM("Updated most verts to " << most_verts);
+      ROS_DEBUG_STREAM("Updated most verts to " << most_verts);
     }
     for (size_t j = 0; j < faces[i].mNumIndices; j++) {
       unsigned int vert_index = faces[i].mIndices[j];
@@ -180,19 +186,19 @@ void RefMesh::Process() {
     vert_histogram[vertices[i].face_list.size()]++;
   }
   for (size_t i = 0; i < vert_histogram.size(); i++) {
-    ROS_INFO_STREAM("Vertices with " << i << " faces : " << vert_histogram[i]);
+    ROS_DEBUG_STREAM("Vertices with " << i << " faces : " << vert_histogram[i]);
   }
   for (size_t i = 0; i < faces.size(); i++) {
     face_histogram[faces[i].mNumIndices]++;
   }
   for (size_t i = 0; i < face_histogram.size(); i++) {
-    ROS_INFO_STREAM("Faces with " << i << " vertices : " << face_histogram[i]);
+    ROS_DEBUG_STREAM("Faces with " << i << " vertices : " << face_histogram[i]);
   }
-  ROS_INFO_STREAM("Bounding box on mesh: ("
+  ROS_DEBUG_STREAM("Bounding box on mesh: ("
                   << min_pt.x << ", " << min_pt.y << ", " << min_pt.z << ") to ("
                   << max_pt.x <<", " << max_pt.y << ", " << max_pt.z << ")");
   // Build the FLANN object on vertices
-  ROS_INFO_STREAM("Building FLANN index of mesh vertices");
+  ROS_DEBUG_STREAM("Building FLANN index of mesh vertices");
   vertices_flann = flann::Matrix<float>(new float[vertices.size()*3],
                                         vertices.size(), 3);
   for (size_t i = 0; i < vertices.size(); i++) {
@@ -204,7 +210,7 @@ void RefMesh::Process() {
   flann_index.reset(new flann::Index<flann::L2<float>>(vertices_flann,
                                                  flann::KDTreeIndexParams(4)));
   flann_index->buildIndex();
-  ROS_INFO_STREAM("FLANN index of mesh vertices built");
+  ROS_DEBUG_STREAM("FLANN index of mesh vertices built");
   PublishMesh();
 }
 void RefMesh::GenerateNormals() {
@@ -294,7 +300,7 @@ DistCheck(const pcl::PointCloud<pcl::PointXYZ>& cloud) {
     membership_vector[i] = false;
     hit_count[i] = 0;
   }
-  ROS_INFO_STREAM("Preparing point cloud for vertex FLANN query");
+  ROS_DEBUG_STREAM("Preparing point cloud for vertex FLANN query");
   size_t nn = 6;
   flann::Matrix<float> query(new float[cloud.points.size()* 3],
                              cloud.points.size(), 3);
@@ -306,7 +312,7 @@ DistCheck(const pcl::PointCloud<pcl::PointXYZ>& cloud) {
   flann::Matrix<int> indices(new int[query.rows*nn], query.rows, nn);
   flann::Matrix<float> dists(new float[query.rows*nn], query.rows, nn);
   flann_index->knnSearch(query, indices, dists, nn, flann::SearchParams(32));
-  ROS_INFO_STREAM("Vertex FLANN query completed");
+  ROS_DEBUG_STREAM("Vertex FLANN query completed");
   // Now lets go over each point and check the vertices in the closest list
   for (size_t i = 0; i < query.rows; i++) {
     std::map<size_t, size_t> face_candidates;

@@ -3,7 +3,6 @@
   <arg name="rviz" default="true" doc="Whether or not to launch RViz"/>
   <arg name="env_pcd" default="$(find map_analysis)/test/SubTLogo.pcd" doc="Path to the pointcloud file for a given environment"/>
   <arg name="env_gt" default="$(find map_analysis)/test/artifacts.csv" doc="Path to the file containing the artifact locations in a given environment"/>
-  <arg name="mesh_analysis" default="false" doc="Enable mesh analysis"/>
   
   <param name="use_sim_time" value="false"/>
   
@@ -16,7 +15,8 @@
   <node pkg="map_analysis" type="live_map_analysis" name="map_analysis" output="screen">
     <param name="model" value="$(arg env_pcd)"/>
     <param name="gt_artifact_filename" value="$(arg env_gt)"/>
-    <param name="mesh_analysis" value="$(arg mesh_analysis)"/>
+    <!-- Provide a mesh file for experimental mesh-based map analysis -->
+    <!-- <param name="mesh_model" value="$(find map_analysis)/test/SubTLogo.dae"/> -->
  </node>
     
 </launch>

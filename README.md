@@ -112,7 +112,6 @@ The launch file at `src/map_analysis/launch/map_analysis.launch` allows you to e
 * `env_pcd`: The path to the ground truth point cloud file for a given environment (string, default: SubTLogo.pcd)  
 * `env_gt`: The file containing the ground truth artifacts in a given environment (string, default: artifacts.csv)  
 * `rviz`: Whether or not to launch RViz (bool, default: false)  
-* `mesh_analysis`: Enable mesh analysis (bool, default: false)  
 
 Additional parameters can be adjusted during runtime using Dynamic Reconfiguration (i.e. `rosrun rqt_reconfigure rqt_reconfigure`)  
 
