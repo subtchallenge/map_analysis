@@ -41,7 +41,6 @@ class LiveMapAnalyzer {
   std::string meshfname;
   pcl::PointCloud<POINT_T>::Ptr model_;
   bool enabled;
-  bool in_run;
   ros::Time max_duration;
   pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter_;
   pcl::VoxelGrid<pcl::PCLPointCloud2> accumulate_filter_;
@@ -163,7 +162,6 @@ class LiveMapAnalyzer {
   void MRCloudCallback(const std::string& robotname, const sensor_msgs::PointCloud2::ConstPtr& msg);
   void MRCloudRateCallback(const std::string& robotname, const std_msgs::Int32::ConstPtr& msg);
   void ProcessClouds();
-  bool InRun();
   void ConfigInit(bool accumulate_mode, double inlier_tolerance, double outlier_tolerance, double min_leaf_size, double incremental_inlier_tolerance);
   
   rosbag::Bag bag_out;
@@ -173,10 +171,6 @@ class LiveMapAnalyzer {
   std::map<std::string, int> mr_cloud_sizes;
   std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr> mr_clouds;
 };
-
-bool LiveMapAnalyzer::InRun() {
-  return in_run;
-}
 
 void LiveMapAnalyzer::
 modeCb(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback, size_t ind) {
@@ -331,12 +325,12 @@ LiveMapAnalyzer::LiveMapAnalyzer(): nh(), private_nh("~") {
   fps = 0.0;
   msg_sequence = 0;
   enabled = true;
-  in_run = true;
   pub_once = false;
   total_cloud_size_ = 0;
   acc_cloud_size_est_ = 0;
   total_pre_ds_size_ = 0;
   total_post_ds_size_ = 0;
+  start_time = -1.0;
   private_nh.param("start_enabled", enabled, true);
   private_nh.param("model", modelfname, std::string("none"));
   private_nh.param("artifact_threshold", artifact_threshold, 5.0);
@@ -841,7 +835,6 @@ void LiveMapAnalyzer::RunStatusCallback(const map_analysis::RunStatus::ConstPtr&
     bad_artifacts.resize(0);
     master_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
     enabled = true;
-    in_run = true;
     start_time = msg->timestamp.toSec();
     ROS_INFO_STREAM("Setting run status to RUN");
   } else if (msg->status == "finished") {
@@ -869,7 +862,7 @@ void LiveMapAnalyzer::RunStringCallback(const std_msgs::String::ConstPtr& msg) {
     bad_artifacts.resize(0);
     master_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
     //ROS_INFO_STREAM("Setting run status to SETUP");
-  } else if (msg->data == "started" && in_run == false) {
+  } else if (msg->data == "started") {
     for (std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr>::iterator itr =  mr_clouds.begin();
          itr != mr_clouds.end(); itr++) {
       itr->second.reset(new pcl::PointCloud<pcl::PointXYZ>);
@@ -882,7 +875,6 @@ void LiveMapAnalyzer::RunStringCallback(const std_msgs::String::ConstPtr& msg) {
     bad_artifacts.resize(0);
     master_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
     enabled = true;
-    in_run = true;
     //ROS_INFO_STREAM("Setting run status to RUN");
   } else if (msg->data == "finished") {
     enabled = false;
@@ -1250,8 +1242,7 @@ void LiveMapAnalyzer::PublishCloud(ros::Publisher& pub,
   msg.header.stamp = current_time;
   pub.publish(msg);
   msg.header.stamp = current_time;
-  if(in_run)
-    bag_out.write(pub.getTopic(), current_time, msg);
+  bag_out.write(pub.getTopic(), current_time, msg);
 }
 
 // void LiveMapAnalyzer::PublishCloud(ros::Publisher& pub,
@@ -1353,8 +1344,12 @@ int main(int argc, char** argv) {
   foreach(rosbag::MessageInstance const m, view)
   {
     analyzer.current_time = m.getTime();
+    
+    if (analyzer.start_time < 0)
+      analyzer.start_time = analyzer.current_time.toSec();
   
     std::string cloudname = m.getTopic();
+    
     std::size_t found = cloudname.rfind("cloud");
     if (found!=std::string::npos) {
       std::size_t found_sub = cloudname.rfind("/cloud_initial_size");
@@ -1384,9 +1379,7 @@ int main(int argc, char** argv) {
         std_msgs::String::ConstPtr s = m.instantiate<std_msgs::String>();
         if (s != NULL) {
           analyzer.RunStringCallback(s);
-          if(analyzer.InRun()) {
-            analyzer.bag_out.write(m.getTopic(), m.getTime(), s);
-          }
+          analyzer.bag_out.write(m.getTopic(), m.getTime(), s);
         }
       } else {
         found = m.getTopic().rfind("/markers");
@@ -1394,8 +1387,7 @@ int main(int argc, char** argv) {
           // Handle run status messages
           visualization_msgs::MarkerArray::ConstPtr ma = m.instantiate<visualization_msgs::MarkerArray>();
           if (ma != NULL) {
-            if(analyzer.InRun())
-              analyzer.bag_out.write(m.getTopic(), m.getTime(), ma);
+            analyzer.bag_out.write(m.getTopic(), m.getTime(), ma);
           }
         } else {
           found = m.getTopic().rfind("/marker");
@@ -1403,8 +1395,7 @@ int main(int argc, char** argv) {
             // Handle run status messages
             visualization_msgs::Marker::ConstPtr marker = m.instantiate<visualization_msgs::Marker>();
             if (marker != NULL) {
-              if(analyzer.InRun())
-                analyzer.bag_out.write(m.getTopic(), m.getTime(), marker);
+              analyzer.bag_out.write(m.getTopic(), m.getTime(), marker);
             }
           } else {
             found = m.getTopic().rfind("/tf");
@@ -1412,8 +1403,7 @@ int main(int argc, char** argv) {
               // Handle run status messages
               tf2_msgs::TFMessage::ConstPtr tfm = m.instantiate<tf2_msgs::TFMessage>();
               if (tfm != NULL) {
-                if(analyzer.InRun())
-                  analyzer.bag_out.write(m.getTopic(), m.getTime(), tfm);
+                analyzer.bag_out.write(m.getTopic(), m.getTime(), tfm);
               }
             } else {
               found = m.getTopic().rfind("subt/artifact_reports");
@@ -1421,8 +1411,7 @@ int main(int argc, char** argv) {
                 // Handle run status messages
                 map_analysis::ArtifactReport::ConstPtr ar = m.instantiate<map_analysis::ArtifactReport>();
                 if (ar != NULL) {
-                  if(analyzer.InRun())
-                    analyzer.bag_out.write(m.getTopic(), m.getTime(), ar);
+                  analyzer.bag_out.write(m.getTopic(), m.getTime(), ar);
                 }
               } else {
                 found = m.getTopic().rfind("/subt/status");
@@ -1431,9 +1420,7 @@ int main(int argc, char** argv) {
                   map_analysis::RunStatus::ConstPtr rs = m.instantiate<map_analysis::RunStatus>();
                   if (rs != NULL) {
                     analyzer.RunStatusCallback(rs);
-                    if(analyzer.InRun()) {
-                      analyzer.bag_out.write(m.getTopic(), m.getTime(), rs);
-                    }
+                    analyzer.bag_out.write(m.getTopic(), m.getTime(), rs);
                   }
                 }
               }
@@ -1442,14 +1429,14 @@ int main(int argc, char** argv) {
         }
       }
     }
-    if(analyzer.InRun() && m.getTime() > next_analysis_time && current == false && full_run) {
+    if(m.getTime() > next_analysis_time && current == false && full_run) {
       if(analyzer.mr_clouds.size() > 0)
         analyzer.ProcessClouds();
       next_analysis_time = next_analysis_time + ros::Duration(10);
       current = true;
     }
     double elapsed_time = m.getTime().toSec() - analyzer.start_time;
-    if(analyzer.InRun() && elapsed_time >= max_time) {
+    if(elapsed_time >= max_time) {
       if(analyzer.mr_clouds.size() > 0)
         analyzer.ProcessClouds();
       break;
