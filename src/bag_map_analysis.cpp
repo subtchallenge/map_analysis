@@ -1340,7 +1340,7 @@ int main(int argc, char** argv) {
   // lookup these specfic topics from the bag
   rosbag::View cloud_view(bag_in, rosbag::TopicQuery(topics));
   ros::Time next_analysis_time = ros::Time(0);
-  bool current = false;
+  bool current = true;
   foreach(rosbag::MessageInstance const m, view)
   {
     analyzer.current_time = m.getTime();
@@ -1360,6 +1360,7 @@ int main(int argc, char** argv) {
         std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
         if (i != NULL) {
           analyzer.MRCloudRateCallback(cloudname, i);
+          current = false;
         }
       } else
       {
@@ -1429,16 +1430,14 @@ int main(int argc, char** argv) {
         }
       }
     }
-    if(m.getTime() > next_analysis_time && current == false && full_run) {
-      if(analyzer.mr_clouds.size() > 0)
+    if(full_run && current == false) {
+      if(analyzer.mr_clouds.size() > 0) {
         analyzer.ProcessClouds();
-      next_analysis_time = next_analysis_time + ros::Duration(10);
-      current = true;
+        current = true;
+      }
     }
     double elapsed_time = m.getTime().toSec() - analyzer.start_time;
     if(elapsed_time >= max_time) {
-      if(analyzer.mr_clouds.size() > 0)
-        analyzer.ProcessClouds();
       break;
     }
   }
