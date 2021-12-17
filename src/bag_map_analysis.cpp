@@ -71,7 +71,7 @@ class LiveMapAnalyzer {
   bool AnalyzeServiceCb(map_analysis::AnalyzePointCloud::Request& req,
                         map_analysis::AnalyzePointCloud::Response& rsp);
   void AnalyzeCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
-  void ArtifactCallback(const map_analysis::ArtifactReport::ConstPtr& msg);
+
   void DoRelativeAssignment();
   void PublishCloud(ros::Publisher& pub, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
   void reconfigure_callback(map_analysis::MapAnalyzerConfig &config, uint32_t level);
@@ -160,6 +160,7 @@ class LiveMapAnalyzer {
   void RunStringCallback(const std_msgs::String::ConstPtr& msg);
   void MRCloudCallback(const std::string& robotname, const sensor_msgs::PointCloud2::ConstPtr& msg);
   void MRCloudRateCallback(const std::string& robotname, const std_msgs::Int32::ConstPtr& msg);
+  void ArtifactCallback(const map_analysis::ArtifactReport::ConstPtr& msg);
   void ProcessClouds();
   void ConfigInit(bool accumulate_mode, double inlier_tolerance, double outlier_tolerance, double min_leaf_size, double incremental_inlier_tolerance);
   
@@ -1406,9 +1407,10 @@ int main(int argc, char** argv) {
             } else {
               found = m.getTopic().rfind("subt/artifact_reports");
               if (found!=std::string::npos) {
-                // Handle run status messages
+                // Handle artifact report messages
                 map_analysis::ArtifactReport::ConstPtr ar = m.instantiate<map_analysis::ArtifactReport>();
                 if (ar != NULL) {
+		  analyzer.ArtifactCallback(ar);
                   analyzer.bag_out.write(m.getTopic(), m.getTime(), ar);
                 }
               } else {
