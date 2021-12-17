@@ -41,7 +41,6 @@ class LiveMapAnalyzer {
   std::string meshfname;
   pcl::PointCloud<POINT_T>::Ptr model_;
   bool enabled;
-  ros::Time max_duration;
   pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter_;
   pcl::VoxelGrid<pcl::PCLPointCloud2> accumulate_filter_;
   ros::Subscriber cloud_sub;
@@ -1267,10 +1266,8 @@ int main(int argc, char** argv) {
   LiveMapAnalyzer analyzer;
   
   std::string bag_in_name, bag_out_name;
-  int max_time;
   analyzer.private_nh.param("bag_in", bag_in_name, std::string("none"));
   analyzer.private_nh.param("bag_out", bag_out_name, std::string("none"));
-  analyzer.private_nh.param("max_duration_sec", max_time, 10000);
   
   bool full_run, accumulate_mode;
   analyzer.private_nh.param("full_run", full_run, true);
@@ -1435,10 +1432,6 @@ int main(int argc, char** argv) {
         analyzer.ProcessClouds();
         current = true;
       }
-    }
-    double elapsed_time = m.getTime().toSec() - analyzer.start_time;
-    if(elapsed_time >= max_time) {
-      break;
     }
   }
   if(full_run == false)
