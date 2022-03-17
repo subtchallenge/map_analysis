@@ -140,9 +140,9 @@ This method should use the live analysis mode, not the offline bag analysis mode
 
 When analyzing mapping data from the SubT Challenge events, please utilize the following repositories to download ground truth point cloud (`.pcd`) files which are compatible with the Map Analysis package:
 
-* [Systems Competition - Tunnel Circuit](https://bitbucket.org/subtchallenge/tunnel_ground_truth)
-* [Systems Competition - Urban Circuit](https://bitbucket.org/subtchallenge/urban_ground_truth)
-* [Systems Competition - Final Event](https://bitbucket.org/subtchallenge/finals_ground_truth)
+* [Systems Competition - Tunnel Circuit](https://github.com/subtchallenge/systems_tunnel_ground_truth)
+* [Systems Competition - Urban Circuit](https://github.com/subtchallenge/systems_urban_ground_truth)
+* [Systems Competition - Final Event](https://github.com/subtchallenge/systems_finals_ground_truth)
 * [Virtual Competition - All Events](https://github.com/subtchallenge/virtual_ground_truth)
 
 These can be cloned within your `mapping_analysis_ws` and loaded by using the path to a pcd file as your `env_pcd` argument during launch.
